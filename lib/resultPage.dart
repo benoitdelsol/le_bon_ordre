@@ -3,19 +3,25 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:le_bon_ordre/questionClass.dart';
 
+import 'dio.dart';
+
 class ResultPage extends StatefulWidget {
   var nextQuestion;
   var frames1;
   Question question;
+  var resetFI;
+  String code;
   List<int> points;
-  var addPoints;
 
-  ResultPage(
-      {super.key,
-      required this.nextQuestion,
-      required this.frames1,
-      required this.question,
-      required this.points, required this.addPoints});
+  ResultPage({
+    super.key,
+    required this.points,
+    required this.code,
+    required this.nextQuestion,
+    required this.resetFI,
+    required this.frames1,
+    required this.question,
+  });
 
   @override
   State<ResultPage> createState() => _ResultPageState();
@@ -40,18 +46,13 @@ class _ResultPageState extends State<ResultPage> {
   int is1Playesready = 0;
   int is2Playesready = 1;
 
+  late Future<List<int>> points;
+  bool pointsAsked = false;
+
   @override
   Widget build(BuildContext context) {
     if (!donePoints) {
       donePoints = true;
-      for (int i = 0; i < 5; i++) {
-        if (widget.frames1[i + 5][0] == widget.question.reponses[i][0]) {
-          setState(() {
-            widget.addPoints(1, 0);
-
-          });
-        }
-      }
     } else {
       null;
     }
@@ -250,6 +251,7 @@ class _ResultPageState extends State<ResultPage> {
                   ),
                   child: IconButton(
                       onPressed: () {
+                        !pointsAsked ? points = askPoints(widget.code) : null;
                         setState(() {
                           showResult = true;
                         });
@@ -305,6 +307,7 @@ class _ResultPageState extends State<ResultPage> {
                           is1Playesready = 1;
                         }
                         if (is2Playesready == 1 && is1Playesready == 1) {
+                          widget.resetFI();
                           widget.nextQuestion();
                         }
                       },

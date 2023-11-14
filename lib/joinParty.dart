@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:le_bon_ordre/dio.dart';
 
 class JoinParty extends StatefulWidget {
   var changeState;
-  var verifierCode;
   var changeIsAdmin;
+  var setCode;
 
-  JoinParty({super.key, required this.changeState, required this.verifierCode, required this.changeIsAdmin});
+  JoinParty({super.key, required this.changeState, required this.changeIsAdmin, required this.setCode});
 
   @override
   State<JoinParty> createState() => _JoinPartyState();
@@ -16,6 +17,24 @@ class JoinParty extends StatefulWidget {
 class _JoinPartyState extends State<JoinParty> {
   @override
   Widget build(BuildContext context) {
+
+
+    verifierCode(String code) async{
+      final String response = await joinGame(code.toUpperCase()) ;
+      if(response=="Joined the game"){
+        widget.changeState(1);
+        widget.changeIsAdmin(false);
+        widget.setCode(code);
+      }else {
+        if (response ==
+            "The game is full") {
+          print("The game is full");
+        }else{
+          print("The game doesn't exist");
+        }
+      }
+    }
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -34,11 +53,8 @@ class _JoinPartyState extends State<JoinParty> {
               width: 250,
               child: TextField(
                 onSubmitted: (String value) {
-                  widget.changeState(1);
-                  widget.verifierCode(value);
-                  widget.changeIsAdmin(false);
-
-
+                  print('aaaaahh');
+                  verifierCode(value);
                 },
                 keyboardType: TextInputType.text,
                 maxLength: 4,

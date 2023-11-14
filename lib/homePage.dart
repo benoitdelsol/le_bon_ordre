@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:le_bon_ordre/dio.dart';
 
 class HomePage extends StatefulWidget {
   var changeState;
@@ -13,6 +14,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+
+
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -79,11 +82,11 @@ class _HomePageState extends State<HomePage> {
                     const EdgeInsets.symmetric(horizontal: 50, vertical: 10)),
               ),
               onPressed: () {
-                widget.changeIsAdmin(true);
-                widget.changeState(2);
                 setState(() {
                   widget.generateCode();
                 });
+                widget.changeIsAdmin(true);
+                widget.changeState(2);
               },
               child: Text(
                 "Créer une partie",

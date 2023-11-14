@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:le_bon_ordre/dio.dart';
 import 'package:le_bon_ordre/settingsPage.dart';
 
 import 'homePage.dart';
@@ -52,13 +53,21 @@ class _MyAppState extends State<MyApp> {
   generateCode() {
     code = "";
 
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 4; i++) {
       code = code + String.fromCharCode(65 + (Random().nextInt(25)));
     }
+    verifierCode(code);
+  }
+
+  setCode(String value){
+    code=value;
   }
 
   verifierCode(String value) {
     code=value.toUpperCase();
+    if(createGame(code)=="Code already taken"){
+      generateCode();
+    }
   }
 
   @override
@@ -74,10 +83,10 @@ class _MyAppState extends State<MyApp> {
                 changeIsAdmin: changeIsAdmin,
               )
             : _state == 1
-                ? JoinParty(changeState: changeState, verifierCode: verifierCode, changeIsAdmin: changeIsAdmin,)
+                ? JoinParty(changeState: changeState, changeIsAdmin: changeIsAdmin,setCode: setCode,)
                 : _state == 2
                     ? SettingsPage(code: code, isAdmin: isAdmin, changeState: changeState, changeNombreManches: changeNombreManches,)
-                    :_state==3? MainGamePage(nombreManches: nombreManches, )
+                    :_state==3? MainGamePage(nombreManches: nombreManches, isAdmin:isAdmin, code: code, )
 
         : const Placeholder(),
         backgroundColor: Colors.black54,

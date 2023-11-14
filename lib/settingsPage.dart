@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:le_bon_ordre/dio.dart';
 
 class SettingsPage extends StatefulWidget {
   String code;
@@ -26,8 +27,13 @@ class _SettingsPageState extends State<SettingsPage> {
   bool ready2 = true;
   int nombreManches = 3;
 
+  late List<bool> ready;
+
   @override
   Widget build(BuildContext context) {
+
+    ready=ready();
+
     return Stack(
       children: [
         Positioned(
@@ -237,6 +243,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   const EdgeInsets.symmetric(horizontal: 50, vertical: 10)),
             ),
             onPressed: () {
+              deleteGame(widget.code.toUpperCase());
               widget.changeState(-2);
             },
             child: Text(
