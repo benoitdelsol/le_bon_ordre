@@ -60,7 +60,7 @@ Future<String> createGame(code) async{
   final dio = Dio();
 
   try {
-    final response = await dio.get('http://192.168.0.101:8080/createGame/$code');
+    final response = await dio.get('http://localhost:8080/createGame/$code');
     return jsonDecode(response.data);
   }catch(e){
     print(e);
@@ -68,16 +68,19 @@ Future<String> createGame(code) async{
   }
 }
 
-Future<String> joinGame(code) async{
+Future<List<dynamic>> joinGame(code) async{
 
   final dio = Dio();
 
   try {
-    final response = await dio.get('http://192.168.0.101:8080/joinGame/$code');
-    return jsonDecode(response.data);
+    final response = await dio.get('http://localhost:8080/joinGame/$code');
+    List<dynamic> responseDecode = jsonDecode(response.data);
+    print([jsonDecode(responseDecode[0]),jsonDecode(responseDecode[1])]);
+
+    return [jsonDecode(responseDecode[0]),jsonDecode(responseDecode[1])];
   }catch(e){
     print(e);
-    return(e.toString());
+    return([e.toString(),0]);
   }
 }
 

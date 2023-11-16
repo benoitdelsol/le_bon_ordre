@@ -7,8 +7,9 @@ class JoinParty extends StatefulWidget {
   var changeState;
   var changeIsAdmin;
   var setCode;
+  var changeNombreManches;
 
-  JoinParty({super.key, required this.changeState, required this.changeIsAdmin, required this.setCode});
+  JoinParty({super.key, required this.changeState, required this.changeIsAdmin, required this.setCode, required this.changeNombreManches});
 
   @override
   State<JoinParty> createState() => _JoinPartyState();
@@ -20,17 +21,20 @@ class _JoinPartyState extends State<JoinParty> {
 
 
     verifierCode(String code) async{
-      final String response = await joinGame(code.toUpperCase()) ;
-      if(response=="Joined the game"){
+      final List<dynamic> response = await joinGame(code.toUpperCase()) ;
+      if(response[0]=="Joined the game"){
+        print(response[1]);
+        print(response[1].runtimeType);
+        widget.changeNombreManches(response[1]);
         widget.changeState(1);
         widget.changeIsAdmin(false);
         widget.setCode(code);
       }else {
-        if (response ==
+        if (response[0] ==
             "The game is full") {
           print("The game is full");
         }else{
-          print("The game doesn't exist");
+          print(response[0]);
         }
       }
     }

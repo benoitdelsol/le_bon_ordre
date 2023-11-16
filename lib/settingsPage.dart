@@ -9,11 +9,13 @@ class SettingsPage extends StatefulWidget {
   bool hideCode = true;
 
   var changeState;
+  int nombreManches;
 
   var changeNombreManches;
 
   SettingsPage(
       {super.key,
+  required this.nombreManches,
       required this.code,
       required this.isAdmin,
       required this.changeState,
@@ -26,7 +28,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   bool ready1 = false;
   bool ready2 = true;
-  int nombreManches = 3;
+  late int nombreManches;
 
   late List<bool> ready;
   bool isConnected = false;
@@ -40,14 +42,13 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   initSocket() {
-    socket = io('http://192.168.0.101:8080', <String, dynamic>{
+    socket = io('http://localhost:8080', <String, dynamic>{
       'autoConnect': false,
       'transports': ['websocket'],
     });
     socket.connect();
     Map messageMap = {
-      'room': widget.code,
-      'username': 'test',
+      'room': widget.code.toUpperCase(),
     };
     socket.emit('join', messageMap);
     socket.onConnect((_) {
@@ -57,35 +58,53 @@ class _SettingsPageState extends State<SettingsPage> {
     socket.onConnectError((err) => print(err));
     socket.onError((err) => print(err));
     socket.on('ready', (newMessage) {
-      print("ready");
-      print(newMessage);
       messageList.add(newMessage);
-      if(newMessage=="pret1"){
+      if (newMessage == "ready1") {
         setState(() {
-          ready1=!ready1;
+          ready1 = !ready1;
         });
       }
-      if(newMessage=="pret2"){
+      if (newMessage == "ready2") {
         setState(() {
-          ready2=!ready2;
+          ready2 = !ready2;
         });
       }
     });
 
+    socket.on("nombreMancheMoins", (newMessage) {
+      setState(() {
+        print("nombreMancheMoins");
+        nombreManches--;
+      });
+    });
+    socket.on("nombreManchePlus", (newMessage) {
+      setState(() {
+        print("nombreManchePlus");
+        nombreManches++;
+      });
+    });
   }
+  bool mancheInit= false;
 
   List<String> messageList = [];
 
   @override
   Widget build(BuildContext context) {
-    sendMessage(String message) {
+    !mancheInit? nombreManches= widget.nombreManches: null;
+    if (ready1 == true && ready2 == true) {
+      widget.changeState(2);
+    }
+
+    sendMessage(String message, String arg) {
+      print("argument: " + arg);
       if (message.isEmpty) return;
       Map messageMap = {
         'message': message,
-        'room': widget.code,
+        'room': widget.code.toUpperCase(),
       };
-      socket.emit('ready', messageMap);
+      socket.emit(arg, messageMap);
     }
+
     return StreamBuilder(
       stream: null,
       builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
@@ -104,7 +123,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     child: Align(
                       alignment: Alignment.topRight,
                       child: Text(
-                        widget.code,
+                        widget.code.toUpperCase(),
                         style: GoogleFonts.getFont(
                           "Erica One",
                           fontSize: widget.hideCode ? 0 : 50,
@@ -211,11 +230,11 @@ class _SettingsPageState extends State<SettingsPage> {
                           splashRadius: 0.1,
                           onPressed: () {
                             setState(() {
-                              widget.isAdmin && !ready1
-                                  ? nombreManches != 0
-                                      ? nombreManches--
-                                      : null
-                                  : null;
+                              if (widget.isAdmin &&
+                                  !ready1 &&
+                                  nombreManches != 1) {
+                                sendMessage("test", "nombreMancheMoins");
+                              }
                             });
                           },
                           icon: const Icon(Icons.remove,
@@ -237,8 +256,7 @@ class _SettingsPageState extends State<SettingsPage> {
                               if (widget.isAdmin &&
                                   !ready1 &&
                                   nombreManches != 15) {
-                                nombreManches++;
-                                socket.emit(("nombreManches"), nombreManches);
+                                sendMessage("test", "nombreManchePlus");
                               }
                             });
                           },
@@ -256,9 +274,15 @@ class _SettingsPageState extends State<SettingsPage> {
               bottom: 5,
               child: TextButton(
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(ready1
-                      ? Colors.green
-                      : const Color.fromRGBO(226, 32, 46, 1)),
+                  backgroundColor: MaterialStateProperty.all<Color>(
+                    widget.isAdmin
+                        ? ready1
+                            ? Colors.green
+                            : const Color.fromRGBO(226, 32, 46, 1)
+                        : ready2
+                            ? Colors.green
+                            : const Color.fromRGBO(226, 32, 46, 1),
+                  ),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(18.0),
@@ -269,8 +293,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 onPressed: () {
                   widget.isAdmin
-                      ? sendMessage("ready1")
-                      : sendMessage("ready2");
+                      ? sendMessage("ready1", "ready")
+                      : sendMessage("ready2", "ready");
                 },
                 child: Text(
                   "Prêt",

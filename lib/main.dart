@@ -38,8 +38,11 @@ class _MyAppState extends State<MyApp> {
   }
   int nombreManches = 3;
 
-  changeNombreManches(int value) {
+  changeNombreManches(int value) {setState(() {
+    print("nombre de manche = "+ value.toString());
     nombreManches = value;
+
+  });
   }
 
   String code = "";
@@ -83,9 +86,9 @@ class _MyAppState extends State<MyApp> {
                 changeIsAdmin: changeIsAdmin,
               )
             : _state == 1
-                ? JoinParty(changeState: changeState, changeIsAdmin: changeIsAdmin,setCode: setCode,)
+                ? JoinParty(changeState: changeState, changeIsAdmin: changeIsAdmin,setCode: setCode,changeNombreManches: changeNombreManches,)
                 : _state == 2
-                    ? SettingsPage(code: code, isAdmin: isAdmin, changeState: changeState, changeNombreManches: changeNombreManches,)
+                    ? SettingsPage(code: code, isAdmin: isAdmin, changeState: changeState, changeNombreManches: changeNombreManches,nombreManches: nombreManches)
                     :_state==3? MainGamePage(nombreManches: nombreManches, isAdmin:isAdmin, code: code, )
 
         : const Placeholder(),
