@@ -29,6 +29,7 @@ class _MyAppState extends State<MyApp> {
   int _state = 0;
 
   void changeState(int i) {
+    print("changing state");
     setState(() {
       _state = _state + i;
       if (_state > 3) {
@@ -36,13 +37,14 @@ class _MyAppState extends State<MyApp> {
       }
     });
   }
+
   int nombreManches = 3;
 
-  changeNombreManches(int value) {setState(() {
-    print("nombre de manche = "+ value.toString());
-    nombreManches = value;
-
-  });
+  changeNombreManches(int value) {
+    setState(() {
+      print("nombre de manche = " + value.toString());
+      nombreManches = value;
+    });
   }
 
   String code = "";
@@ -50,7 +52,7 @@ class _MyAppState extends State<MyApp> {
   bool isAdmin = false;
 
   changeIsAdmin(bool value) {
-      isAdmin = value;
+    isAdmin = value;
   }
 
   generateCode() {
@@ -62,13 +64,13 @@ class _MyAppState extends State<MyApp> {
     verifierCode(code);
   }
 
-  setCode(String value){
-    code=value;
+  setCode(String value) {
+    code = value;
   }
 
   verifierCode(String value) {
-    code=value.toUpperCase();
-    if(createGame(code)=="Code already taken"){
+    code = value.toUpperCase();
+    if (createGame(code) == "Code already taken") {
       generateCode();
     }
   }
@@ -86,12 +88,26 @@ class _MyAppState extends State<MyApp> {
                 changeIsAdmin: changeIsAdmin,
               )
             : _state == 1
-                ? JoinParty(changeState: changeState, changeIsAdmin: changeIsAdmin,setCode: setCode,changeNombreManches: changeNombreManches,)
+                ? JoinParty(
+                    changeState: changeState,
+                    changeIsAdmin: changeIsAdmin,
+                    setCode: setCode,
+                    changeNombreManches: changeNombreManches,
+                  )
                 : _state == 2
-                    ? SettingsPage(code: code, isAdmin: isAdmin, changeState: changeState, changeNombreManches: changeNombreManches,nombreManches: nombreManches)
-                    :_state==3? MainGamePage(nombreManches: nombreManches, isAdmin:isAdmin, code: code, )
-
-        : const Placeholder(),
+                    ? SettingsPage(
+                        code: code,
+                        isAdmin: isAdmin,
+                        changeState: changeState,
+                        changeNombreManches: changeNombreManches,
+                        nombreManches: nombreManches)
+                    : _state == 3
+                        ? MainGamePage(
+                            nombreManches: nombreManches,
+                            isAdmin: isAdmin,
+                            code: code,
+                          )
+                        : const Placeholder(),
         backgroundColor: Colors.black54,
       ),
     );

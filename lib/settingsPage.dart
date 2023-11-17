@@ -15,7 +15,7 @@ class SettingsPage extends StatefulWidget {
 
   SettingsPage(
       {super.key,
-  required this.nombreManches,
+      required this.nombreManches,
       required this.code,
       required this.isAdmin,
       required this.changeState,
@@ -42,7 +42,8 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   initSocket() {
-    socket = io('http://localhost:8080', <String, dynamic>{
+    socket = io('http://192.168.1.48:8080', <String, dynamic>{
+      'forceNew': true,
       'autoConnect': false,
       'transports': ['websocket'],
     });
@@ -60,14 +61,27 @@ class _SettingsPageState extends State<SettingsPage> {
     socket.on('ready', (newMessage) {
       messageList.add(newMessage);
       if (newMessage == "ready1") {
-        setState(() {
-          ready1 = !ready1;
-        });
+        ready1 = !ready1;
+        if (ready1 == true && ready2 == true) {
+          socket.disconnect();
+          socket.close();
+          print("should start");
+          widget.changeState(1);
+        } else {
+          setState(() {
+          });
+        }
       }
       if (newMessage == "ready2") {
-        setState(() {
-          ready2 = !ready2;
-        });
+        ready2 = !ready2;
+        if (ready1 == true && ready2 == true) {
+          socket.disconnect();
+          socket.close();
+          widget.changeState(1);
+        } else {
+          setState(() {
+          });
+        }
       }
     });
 
@@ -84,17 +98,18 @@ class _SettingsPageState extends State<SettingsPage> {
       });
     });
   }
-  bool mancheInit= false;
+
+  bool mancheInit = false;
 
   List<String> messageList = [];
+  bool shouldStart = false;
 
   @override
   Widget build(BuildContext context) {
-    !mancheInit? nombreManches= widget.nombreManches: null;
-    if (ready1 == true && ready2 == true) {
-      widget.changeState(2);
+    if (!mancheInit) {
+      nombreManches = widget.nombreManches;
+      mancheInit = true;
     }
-
     sendMessage(String message, String arg) {
       print("argument: " + arg);
       if (message.isEmpty) return;
@@ -324,8 +339,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 onPressed: () {
                   socket.disconnect();
-                  socket.dispose();
-                  super.dispose();
+                  socket.close();
                   isConnected = false;
                   deleteGame(widget.code.toUpperCase());
                   widget.changeState(-2);

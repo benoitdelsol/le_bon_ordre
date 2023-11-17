@@ -8,9 +8,8 @@ import 'package:socket_io_client/socket_io_client.dart' as IO;
 /// More examples see https://github.com/cfug/dio/blob/main/example
 Future<List<Question>> getQuestions() async{
   final dio = Dio();
-
   try{
-    final response = await dio.get('http://192.168.0.101:8080/questions');
+    final response = await dio.get('http://192.168.1.48:8080/questions');
     List<String> titres = [];
     List<String> type = [];
     List<List<List<String>>> reponses = [];
@@ -47,7 +46,6 @@ Future<List<Question>> getQuestions() async{
       questions.add(Question(titres[i], type[i], reponses[i]));
     }
 
-
     return questions;
 
   }catch(e){print(e);
@@ -60,7 +58,7 @@ Future<String> createGame(code) async{
   final dio = Dio();
 
   try {
-    final response = await dio.get('http://localhost:8080/createGame/$code');
+    final response = await dio.get('http://192.168.1.48:8080/createGame/$code');
     return jsonDecode(response.data);
   }catch(e){
     print(e);
@@ -73,7 +71,7 @@ Future<List<dynamic>> joinGame(code) async{
   final dio = Dio();
 
   try {
-    final response = await dio.get('http://localhost:8080/joinGame/$code');
+    final response = await dio.get('http://192.168.1.48:8080/joinGame/$code');
     List<dynamic> responseDecode = jsonDecode(response.data);
     print([jsonDecode(responseDecode[0]),jsonDecode(responseDecode[1])]);
 
@@ -89,30 +87,42 @@ Future<void> deleteGame(code) async{
   final dio = Dio();
 
   try {
-    final response = await dio.get('http://192.168.0.101:8080/deleteGame/$code');
+    final response = await dio.get('http://192.168.1.48:8080/deleteGame/$code');
+    print(jsonDecode(response.data));
   }catch(e){
     print(e);
   }
 
 }
 
-Future<List<int>> sendPoints(code,points, teamNumber) async{
+Future<List<dynamic>> sendPoints(code,points, teamNumber, disposition) async{
+  String dispositionString = "";
+  for (int i =0; i<5;i++){
+    dispositionString = dispositionString + disposition[i].toString();
+  }
+  print(dispositionString);
 
   final dio = Dio();
-  print('aaahhh');
 
   try {
-    final response = await dio.get('http://192.168.0.101:8080/sendPoints?code=$code&points=$points&teamNumber=$teamNumber');
+    final response = await dio.get('http://192.168.1.48:8080/sendPoints?code=$code&points=$points&teamNumber=$teamNumber&disposition=$dispositionString');
 
     points=[0,0];
-    print(jsonDecode(response.data).runtimeType);
-    print(response.data);
+    List<int>disposition3= [];
     List<dynamic> responseDecode=jsonDecode(response.data);
     for ( int i =0; i<responseDecode.length;i++){
-      print (jsonDecode(responseDecode[i]).runtimeType);
-      points[i]=jsonDecode(responseDecode[i]);
+      if(i<2){
+        points[i] = jsonDecode(responseDecode[i]);
+      }else{
+        dispositionString = jsonDecode(responseDecode[i]);
+      }
     }
-    return points;
+    print(dispositionString);
+    for (int i =0; i<5;i++){
+      disposition3.add(int.parse(dispositionString[i]));
+    }
+    print([points,disposition3]);
+    return [points,disposition3];
   }catch(e){
     print(e);
     return [];
@@ -120,30 +130,4 @@ Future<List<int>> sendPoints(code,points, teamNumber) async{
 
 }
 
-Future<List<int>> askPoints(code) async{
 
-  final dio = Dio();
-
-  try {
-    final response = await dio.get('http://192.168.0.101:8080/sendPoints/$code');
-    return jsonDecode(response.data);
-  }catch(e){
-    print(e);
-    return [];
-  }
-
-}
-
-List<bool> ready() {
-  IO.Socket socket = IO.io('http://192.168.0.101:8080');
-  socket.onConnect((_) {
-    print('connect');
-    socket.emit('msg', 'test');
-  });
-  socket.on('event', (data) => print(data));
-  socket.onDisconnect((_) => print('disconnect'));
-  socket.on('fromServer', (_) => print(_));
-
-  return [false, false];
-
-}

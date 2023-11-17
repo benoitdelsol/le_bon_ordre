@@ -2,6 +2,7 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:le_bon_ordre/questionClass.dart';
+import 'package:socket_io_client/socket_io_client.dart';
 
 import 'dio.dart';
 
@@ -12,16 +13,19 @@ class ResultPage extends StatefulWidget {
   var resetFI;
   String code;
   List<int> points;
+  bool isAdmin;
+  List<int> disposition;
 
-  ResultPage({
-    super.key,
-    required this.points,
-    required this.code,
-    required this.nextQuestion,
-    required this.resetFI,
-    required this.frames1,
-    required this.question,
-  });
+  ResultPage(
+      {super.key,
+      required this.points,
+      required this.code,
+      required this.nextQuestion,
+      required this.resetFI,
+      required this.frames1,
+      required this.question,
+      required this.isAdmin,
+      required this.disposition});
 
   @override
   State<ResultPage> createState() => _ResultPageState();
@@ -42,94 +46,240 @@ class _ResultPageState extends State<ResultPage> {
     ["", ""],
     ["", ""]
   ];
-  bool donePoints = false;
-  int is1Playesready = 0;
-  int is2Playesready = 1;
+  int is1PlayerReady = 0;
+  int is2PlayerReady = 0;
 
-  late Future<List<int>> points;
-  bool pointsAsked = false;
+  late Socket socket;
+
+  @override
+  void initState() {
+    initSocket();
+    super.initState();
+  }
+
+  initSocket() {
+    socket = io('http://192.168.1.48:8080', <String, dynamic>{
+      'autoConnect': false,
+      'transports': ['websocket'],
+    });
+    socket.connect();
+    Map messageMap = {
+      'room': widget.code.toUpperCase(),
+    };
+    socket.emit('join', messageMap);
+    socket.onConnect((_) {
+      print('Connection established');
+    });
+    socket.onDisconnect((_) => print('Connection Disconnection'));
+    socket.onConnectError((err) => print(err));
+    socket.onError((err) => print(err));
+    socket.on('ready', (newMessage) {
+      print(newMessage);
+      if (newMessage == "ready1") {
+        is1PlayerReady == 1 ? is1PlayerReady = 0 : is1PlayerReady = 1;
+        if (is1PlayerReady + is2PlayerReady == 2) {
+          socket.disconnect();
+          socket.close();
+          widget.nextQuestion();
+          print("should start");
+        } else {
+          setState(() {});
+        }
+      }
+      if (newMessage == "ready2") {
+        is2PlayerReady == 1 ? is2PlayerReady = 0 : is2PlayerReady = 1;
+        if (is1PlayerReady + is2PlayerReady == 2) {
+          socket.disconnect();
+          socket.close();
+          widget.nextQuestion();
+        } else {
+          setState(() {});
+        }
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (!donePoints) {
-      donePoints = true;
-    } else {
-      null;
+    sendMessage(String message, String arg) {
+      print("argument: " + arg);
+      if (message.isEmpty) return;
+      Map messageMap = {
+        'message': message,
+        'room': widget.code.toUpperCase(),
+      };
+      socket.emit(arg, messageMap);
     }
+
+    print(widget.disposition);
+
     return !showResult
         ? Stack(
             children: [
               Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      for (int i = 5; i < 10; i++)
-                        widget.frames1[i][0] != ""
-                            ? Container(
-                                height: MediaQuery.sizeOf(context).width / 10,
-                                width: MediaQuery.sizeOf(context).width / 10,
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                      color: widget.frames1[i][0] ==
-                                              widget.question.reponses[i - 5][0]
-                                          ? Colors.green
-                                          : Colors.red,
-                                      width: 5),
-                                  image: DecorationImage(
-                                      image: NetworkImage(widget.frames1[i][1]),
-                                      fit: BoxFit.cover),
-                                  borderRadius: const BorderRadius.all(
-                                      Radius.elliptical(10, 10)),
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    Container(
-                                      height: 30,
+                  widget.isAdmin
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            for (int i = 5; i < 10; i++)
+                              widget.frames1[i][0] != ""
+                                  ? Container(
+                                      height:
+                                          MediaQuery.sizeOf(context).width / 10,
                                       width:
                                           MediaQuery.sizeOf(context).width / 10,
-                                      decoration: const BoxDecoration(
-                                        color: Color.fromRGBO(226, 32, 46, 1),
-                                        borderRadius: BorderRadius.only(
-                                          bottomLeft: Radius.elliptical(10, 10),
-                                          bottomRight:
-                                              Radius.elliptical(10, 10),
-                                        ),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                            color: widget.frames1[i][0] ==
+                                                    widget.question
+                                                        .reponses[i - 5][0]
+                                                ? Colors.green
+                                                : Colors.red,
+                                            width: 5),
+                                        image: DecorationImage(
+                                            image: NetworkImage(
+                                                widget.frames1[i][1]),
+                                            fit: BoxFit.cover),
+                                        borderRadius: const BorderRadius.all(
+                                            Radius.elliptical(10, 10)),
                                       ),
-                                      child: Center(
-                                        child: FittedBox(
-                                          fit: BoxFit.scaleDown,
-                                          child: Text(
-                                            widget.frames1[i][0],
-                                            style: GoogleFonts.getFont(
-                                              "Jura",
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.w500,
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          Container(
+                                            height: 30,
+                                            width: MediaQuery.sizeOf(context)
+                                                    .width /
+                                                10,
+                                            decoration: const BoxDecoration(
+                                              color: Color.fromRGBO(
+                                                  226, 32, 46, 1),
+                                              borderRadius: BorderRadius.only(
+                                                bottomLeft:
+                                                    Radius.elliptical(10, 10),
+                                                bottomRight:
+                                                    Radius.elliptical(10, 10),
+                                              ),
+                                            ),
+                                            child: Center(
+                                              child: FittedBox(
+                                                fit: BoxFit.scaleDown,
+                                                child: Text(
+                                                  widget.frames1[i][0],
+                                                  style: GoogleFonts.getFont(
+                                                    "Jura",
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ),
                                             ),
                                           ),
+                                        ],
+                                      ),
+                                    )
+                                  : DottedBorder(
+                                      borderType: BorderType.RRect,
+                                      color: Colors.white,
+                                      radius: const Radius.circular(10),
+                                      child: Container(
+                                        height:
+                                            MediaQuery.sizeOf(context).width /
+                                                10,
+                                        width:
+                                            MediaQuery.sizeOf(context).width /
+                                                10,
+                                        decoration: const BoxDecoration(
+                                          borderRadius: BorderRadius.all(
+                                              Radius.elliptical(10, 10)),
                                         ),
                                       ),
                                     ),
-                                  ],
-                                ),
-                              )
-                            : DottedBorder(
-                                borderType: BorderType.RRect,
-                                color: Colors.white,
-                                radius: const Radius.circular(10),
-                                child: Container(
-                                  height: MediaQuery.sizeOf(context).width / 10,
-                                  width: MediaQuery.sizeOf(context).width / 10,
-                                  decoration: const BoxDecoration(
-                                    borderRadius: BorderRadius.all(
-                                        Radius.elliptical(10, 10)),
-                                  ),
-                                ),
-                              ),
-                    ],
-                  ),
+                          ],
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            for (int i = 0; i < 5; i++)
+                              widget.disposition[i] != 6
+                                  ? Container(
+                                      height:
+                                          MediaQuery.sizeOf(context).width / 10,
+                                      width:
+                                          MediaQuery.sizeOf(context).width / 10,
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                            color: widget.disposition[i] == i
+                                                ? Colors.green
+                                                : Colors.red,
+                                            width: 5),
+                                        image: DecorationImage(
+                                            image: NetworkImage(
+                                                widget.question.reponses[
+                                                    widget.disposition[i]][1]),
+                                            fit: BoxFit.cover),
+                                        borderRadius: const BorderRadius.all(
+                                            Radius.elliptical(10, 10)),
+                                      ),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          Container(
+                                            height: 30,
+                                            width: MediaQuery.sizeOf(context)
+                                                    .width /
+                                                10,
+                                            decoration: const BoxDecoration(
+                                              color: Color.fromRGBO(
+                                                  226, 32, 46, 1),
+                                              borderRadius: BorderRadius.only(
+                                                bottomLeft:
+                                                    Radius.elliptical(10, 10),
+                                                bottomRight:
+                                                    Radius.elliptical(10, 10),
+                                              ),
+                                            ),
+                                            child: Center(
+                                              child: FittedBox(
+                                                fit: BoxFit.scaleDown,
+                                                child: Text(
+                                                  widget.question.reponses[
+                                                      widget.disposition[i]][0],
+                                                  style: GoogleFonts.getFont(
+                                                    "Jura",
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  : DottedBorder(
+                                      borderType: BorderType.RRect,
+                                      color: Colors.white,
+                                      radius: const Radius.circular(10),
+                                      child: Container(
+                                        height:
+                                            MediaQuery.sizeOf(context).width /
+                                                10,
+                                        width:
+                                            MediaQuery.sizeOf(context).width /
+                                                10,
+                                        decoration: const BoxDecoration(
+                                          borderRadius: BorderRadius.all(
+                                              Radius.elliptical(10, 10)),
+                                        ),
+                                      ),
+                                    ),
+                          ],
+                        ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -177,68 +327,167 @@ class _ResultPageState extends State<ResultPage> {
                         )
                     ],
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      for (int i = 5; i < 10; i++)
-                        frames2[i][0] != ""
-                            ? Container(
-                                height: MediaQuery.sizeOf(context).width / 10,
-                                width: MediaQuery.sizeOf(context).width / 10,
-                                decoration: BoxDecoration(
-                                  image: DecorationImage(
-                                      image: NetworkImage(frames2[i][1]),
-                                      fit: BoxFit.cover),
-                                  borderRadius: const BorderRadius.all(
-                                      Radius.elliptical(10, 10)),
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    Container(
-                                      height: 30,
+                  widget.isAdmin
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            for (int i = 0; i < 5; i++)
+                              widget.disposition[i] != 6
+                                  ? Container(
+                                      height:
+                                          MediaQuery.sizeOf(context).width / 10,
                                       width:
-                                          MediaQuery.sizeOf(context).width / 7,
-                                      decoration: const BoxDecoration(
-                                        color: Color.fromRGBO(226, 32, 46, 1),
-                                        borderRadius: BorderRadius.only(
-                                          bottomLeft: Radius.elliptical(10, 10),
-                                          bottomRight:
-                                              Radius.elliptical(10, 10),
-                                        ),
+                                          MediaQuery.sizeOf(context).width / 10,
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                            color: widget.disposition[i] == i
+                                                ? Colors.green
+                                                : Colors.red,
+                                            width: 5),
+                                        image: DecorationImage(
+                                            image: NetworkImage(
+                                                widget.question.reponses[
+                                                    widget.disposition[i]][1]),
+                                            fit: BoxFit.cover),
+                                        borderRadius: const BorderRadius.all(
+                                            Radius.elliptical(10, 10)),
                                       ),
-                                      child: Center(
-                                        child: FittedBox(
-                                          fit: BoxFit.scaleDown,
-                                          child: Text(
-                                            frames2[i][0],
-                                            style: GoogleFonts.getFont(
-                                              "Jura",
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.w500,
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          Container(
+                                            height: 30,
+                                            width: MediaQuery.sizeOf(context)
+                                                    .width /
+                                                10,
+                                            decoration: const BoxDecoration(
+                                              color: Color.fromRGBO(
+                                                  226, 32, 46, 1),
+                                              borderRadius: BorderRadius.only(
+                                                bottomLeft:
+                                                    Radius.elliptical(10, 10),
+                                                bottomRight:
+                                                    Radius.elliptical(10, 10),
+                                              ),
+                                            ),
+                                            child: Center(
+                                              child: FittedBox(
+                                                fit: BoxFit.scaleDown,
+                                                child: Text(
+                                                  widget.question.reponses[
+                                                      widget.disposition[i]][0],
+                                                  style: GoogleFonts.getFont(
+                                                    "Jura",
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ),
                                             ),
                                           ),
+                                        ],
+                                      ),
+                                    )
+                                  : DottedBorder(
+                                      borderType: BorderType.RRect,
+                                      color: Colors.white,
+                                      radius: const Radius.circular(10),
+                                      child: Container(
+                                        height:
+                                            MediaQuery.sizeOf(context).width /
+                                                10,
+                                        width:
+                                            MediaQuery.sizeOf(context).width /
+                                                10,
+                                        decoration: const BoxDecoration(
+                                          borderRadius: BorderRadius.all(
+                                              Radius.elliptical(10, 10)),
                                         ),
                                       ),
                                     ),
-                                  ],
-                                ),
-                              )
-                            : DottedBorder(
-                                borderType: BorderType.RRect,
-                                color: Colors.white,
-                                radius: const Radius.circular(10),
-                                child: Container(
-                                  height: MediaQuery.sizeOf(context).width / 10,
-                                  width: MediaQuery.sizeOf(context).width / 10,
-                                  decoration: const BoxDecoration(
-                                    borderRadius: BorderRadius.all(
-                                        Radius.elliptical(10, 10)),
-                                  ),
-                                ),
-                              ),
-                    ],
-                  ),
+                          ],
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            for (int i = 5; i < 10; i++)
+                              widget.frames1[i][0] != ""
+                                  ? Container(
+                                      height:
+                                          MediaQuery.sizeOf(context).width / 10,
+                                      width:
+                                          MediaQuery.sizeOf(context).width / 10,
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                            color: widget.frames1[i][0] ==
+                                                    widget.question
+                                                        .reponses[i - 5][0]
+                                                ? Colors.green
+                                                : Colors.red,
+                                            width: 5),
+                                        image: DecorationImage(
+                                            image: NetworkImage(
+                                                widget.frames1[i][1]),
+                                            fit: BoxFit.cover),
+                                        borderRadius: const BorderRadius.all(
+                                            Radius.elliptical(10, 10)),
+                                      ),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          Container(
+                                            height: 30,
+                                            width: MediaQuery.sizeOf(context)
+                                                    .width /
+                                                10,
+                                            decoration: const BoxDecoration(
+                                              color: Color.fromRGBO(
+                                                  226, 32, 46, 1),
+                                              borderRadius: BorderRadius.only(
+                                                bottomLeft:
+                                                    Radius.elliptical(10, 10),
+                                                bottomRight:
+                                                    Radius.elliptical(10, 10),
+                                              ),
+                                            ),
+                                            child: Center(
+                                              child: FittedBox(
+                                                fit: BoxFit.scaleDown,
+                                                child: Text(
+                                                  widget.frames1[i][0],
+                                                  style: GoogleFonts.getFont(
+                                                    "Jura",
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  : DottedBorder(
+                                      borderType: BorderType.RRect,
+                                      color: Colors.white,
+                                      radius: const Radius.circular(10),
+                                      child: Container(
+                                        height:
+                                            MediaQuery.sizeOf(context).width /
+                                                10,
+                                        width:
+                                            MediaQuery.sizeOf(context).width /
+                                                10,
+                                        decoration: const BoxDecoration(
+                                          borderRadius: BorderRadius.all(
+                                              Radius.elliptical(10, 10)),
+                                        ),
+                                      ),
+                                    ),
+                          ],
+                        ),
                 ],
               ),
               Positioned(
@@ -251,7 +500,6 @@ class _ResultPageState extends State<ResultPage> {
                   ),
                   child: IconButton(
                       onPressed: () {
-                        !pointsAsked ? points = askPoints(widget.code) : null;
                         setState(() {
                           showResult = true;
                         });
@@ -288,7 +536,7 @@ class _ResultPageState extends State<ResultPage> {
                 child: TextButton(
                   style: ButtonStyle(
                     backgroundColor: MaterialStateProperty.all<Color>(
-                        const Color.fromRGBO(226, 32, 46, 1)),
+                        widget.isAdmin?is1PlayerReady==1?Colors.green:const Color.fromRGBO(226, 32, 46, 1):is2PlayerReady==1?Colors.green:const Color.fromRGBO(226, 32, 46, 1)),
                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(18.0),
@@ -299,22 +547,10 @@ class _ResultPageState extends State<ResultPage> {
                             horizontal: 50, vertical: 10)),
                   ),
                   onPressed: () {
-                    setState(
-                      () {
-                        if (is1Playesready == 1) {
-                          is1Playesready = 0;
-                        } else {
-                          is1Playesready = 1;
-                        }
-                        if (is2Playesready == 1 && is1Playesready == 1) {
-                          widget.resetFI();
-                          widget.nextQuestion();
-                        }
-                      },
-                    );
+                    sendMessage(widget.isAdmin ? "ready1" : "ready2", "ready");
                   },
                   child: Text(
-                    "Continuer ${is1Playesready + is2Playesready}/2",
+                    "Continuer ${is1PlayerReady + is2PlayerReady}/2",
                     style: GoogleFonts.getFont(
                       "Jura",
                       fontSize: 20,
@@ -345,7 +581,7 @@ class _ResultPageState extends State<ResultPage> {
                           fontSize: 50,
                           color: const Color.fromRGBO(226, 32, 46, 1),
                         ),
-                      ),
+                      )
                     ],
                   ),
                   Container(

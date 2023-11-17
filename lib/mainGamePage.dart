@@ -54,11 +54,16 @@ class _MainGamePageState extends State<MainGamePage> {
         finish = false;
         _controller.restart();
         mancheActuelle++;
+        isFramesInitialised = false;
         frames.clear();
       },
     );
   }
   late List<int> gamePoints;
+  List<dynamic> response = [];
+
+
+  List<int> disposition1 = [];
 
   bool isFramesInitialised = false;
 
@@ -68,6 +73,7 @@ class _MainGamePageState extends State<MainGamePage> {
 
   @override
   Widget build(BuildContext context) {
+    String disposition="";
     if (!frames.isNotEmpty) {
       frames = [
         ["", ""],
@@ -87,6 +93,7 @@ class _MainGamePageState extends State<MainGamePage> {
       future: questions = getQuestions(),
       builder: (BuildContext context, AsyncSnapshot<List<Question>> snapshot) {
         if (snapshot.data != null) {
+          print(snapshot.data!.length);
           if (!isFramesInitialised) {
             frames = List.from(List<List<String>>.from(
                 snapshot.data![mancheActuelle - 1].reponses));
@@ -121,18 +128,37 @@ class _MainGamePageState extends State<MainGamePage> {
                     ),
                     interval: const Duration(milliseconds: 100),
                     onFinished: () async {
+                      disposition1= [];
                       points=0;
-                      for (int i = 0; i < 5; i++) {
-                        if (frames[i + 5][0] == snapshot.data![mancheActuelle-1].reponses[i][0]) {
-                          setState(() {
+                      for (int i = 5; i < 10; i++) {
+                        if (frames[i][0] == snapshot.data![mancheActuelle-1].reponses[i-5][0]) {
                             points+=1;
-                          });
                         }
                       }
+
+                      List<String> names = snapshot.data![mancheActuelle-1].reponses.map((e) => e[0]).toList();
+                      List<String>names2 = frames.sublist(5,10).map((e) => e[0]).toList();
+                      String name;
+
+                      for(name in names){
+                        disposition1.add(names2.indexOf(name));
+                      }
+
+                      for(int i =0; i<disposition1.length;i++){
+                        if (disposition1[i] == -1){
+                          disposition1[i] = 6;
+                        }
+                      }
+
+
                       if(widget.isAdmin){
-                        gamePoints = await sendPoints(widget.code.toUpperCase(), points, 0);
+                        response = await sendPoints(widget.code.toUpperCase(), points, 0, disposition1);
+                        gamePoints = response[0];
+                        disposition1 = response[1];
                       }else{
-                        gamePoints =await sendPoints(widget.code.toUpperCase(), points, 1);
+                        response =await sendPoints(widget.code.toUpperCase(), points, 1, disposition1);
+                        gamePoints = response[0];
+                        disposition1 = response[1];
                       }
 
                       setState(() {
@@ -528,6 +554,8 @@ class _MainGamePageState extends State<MainGamePage> {
             );
           } else {
             return ResultPage(
+              disposition: disposition1,
+              isAdmin: widget.isAdmin,
               points: gamePoints,
               code: widget.code,
               nextQuestion: nextQuestion,
