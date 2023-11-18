@@ -13,12 +13,14 @@ class MainGamePage extends StatefulWidget {
   int nombreManches;
   bool isAdmin;
   String code;
+  var changeState;
 
   MainGamePage({
     super.key,
     required this.nombreManches,
     required this.isAdmin,
     required this.code,
+    required this.changeState,
   });
 
   @override
@@ -90,7 +92,7 @@ class _MainGamePageState extends State<MainGamePage> {
     }
     Future<List<Question>> questions;
     return FutureBuilder(
-      future: questions = getQuestions(),
+      future: questions = getQuestions(widget.nombreManches, widget.code.toUpperCase()),
       builder: (BuildContext context, AsyncSnapshot<List<Question>> snapshot) {
         if (snapshot.data != null) {
           print(snapshot.data!.length);
@@ -117,7 +119,7 @@ class _MainGamePageState extends State<MainGamePage> {
                   right: 5,
                   child: Countdown(
                     controller: _controller,
-                    seconds: 10,
+                    seconds: 60,
                     build: (_, double time) => Text(
                       time.toString(),
                       style: GoogleFonts.getFont(
@@ -155,10 +157,12 @@ class _MainGamePageState extends State<MainGamePage> {
                         response = await sendPoints(widget.code.toUpperCase(), points, 0, disposition1);
                         gamePoints = response[0];
                         disposition1 = response[1];
+                        print("disposition1 = "+disposition1.toString());
                       }else{
                         response =await sendPoints(widget.code.toUpperCase(), points, 1, disposition1);
                         gamePoints = response[0];
                         disposition1 = response[1];
+                        print("disposition1 = "+disposition1.toString());
                       }
 
                       setState(() {
@@ -168,208 +172,205 @@ class _MainGamePageState extends State<MainGamePage> {
                     },
                   ),
                 ),
-                Positioned(
-                  top: 0,
-                  child: Row(
-                    children: [
-                      Text(
-                        "ROUND #$mancheActuelle",
-                        style: GoogleFonts.getFont(
-                          "Erica One",
-                          fontSize: 50,
-                          color: const Color.fromRGBO(226, 32, 46, 1),
-                        ),
-                      ),
-                      Align(
-                        child: Container(
-                          height: 40,
-                          width: 150,
-                          margin: const EdgeInsets.only(top: 5, left: 40),
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                                color: const Color.fromRGBO(226, 32, 46, 1),
-                                width: 1.0),
-                            borderRadius: const BorderRadius.all(
-                                Radius.elliptical(50, 50)),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          "ROUND #$mancheActuelle",
+                          style: GoogleFonts.getFont(
+                            "Erica One",
+                            fontSize: 50,
+                            color: const Color.fromRGBO(226, 32, 46, 1),
                           ),
-                          child: Center(
-                            child: Text(
-                              snapshot.data![mancheActuelle - 1].type,
-                              style: GoogleFonts.getFont(
-                                "Jura",
-                                fontSize: 20,
-                                color: Colors.white,
-                                fontWeight: FontWeight.w500,
+                        ),
+                        Align(
+                          child: Container(
+                            height: 40,
+                            width: 150,
+                            margin: const EdgeInsets.only(top: 5, left: 40),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                  color: const Color.fromRGBO(226, 32, 46, 1),
+                                  width: 1.0),
+                              borderRadius: const BorderRadius.all(
+                                  Radius.elliptical(50, 50)),
+                            ),
+                            child: Center(
+                              child: Text(
+                                snapshot.data![mancheActuelle - 1].type,
+                                style: GoogleFonts.getFont(
+                                  "Jura",
+                                  fontSize: 20,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      )
-                    ],
-                  ),
-                ),
-                Positioned(
-                  left: 5,
-                  top: 80,
-                  child: Text(
-                    snapshot.data![mancheActuelle - 1].titre,
-                    style: GoogleFonts.getFont(
-                      "Jura",
-                      fontSize: 20,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
+                        )
+                      ],
                     ),
-                  ),
-                ),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        for (int i = 0; i < 5; i++)
-                          frames[i][0] != ""
-                              ? Draggable(
-                                  data: i,
-                                  feedback: Container(
-                                    height:
-                                        MediaQuery.sizeOf(context).width / 7,
-                                    width: MediaQuery.sizeOf(context).width / 7,
-                                    decoration: BoxDecoration(
-                                      image: DecorationImage(
-                                          image: NetworkImage(frames[i][1]),
-                                          fit: BoxFit.cover),
-                                      borderRadius: const BorderRadius.all(
-                                          Radius.elliptical(10, 10)),
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        Container(
-                                          height: 30,
-                                          width:
-                                              MediaQuery.sizeOf(context).width /
-                                                  7,
-                                          decoration: const BoxDecoration(
-                                            color:
-                                                Color.fromRGBO(226, 32, 46, 1),
-                                            borderRadius: BorderRadius.only(
-                                              bottomLeft:
-                                                  Radius.elliptical(10, 10),
-                                              bottomRight:
-                                                  Radius.elliptical(10, 10),
-                                            ),
-                                          ),
-                                          child: Center(
-                                            child: FittedBox(
-                                              fit: BoxFit.scaleDown,
-                                              child: Text(
-                                                frames[i][0],
-                                                style: GoogleFonts.getFont(
-                                                  "Jura",
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  childWhenDragging: DottedBorder(
-                                    borderType: BorderType.RRect,
-                                    color: Colors.white,
-                                    radius: const Radius.circular(10),
-                                    child: Container(
+                    Text(
+                      snapshot.data![mancheActuelle - 1].titre.replaceAll("\\n", "\n"),
+                      style: GoogleFonts.getFont(
+                        "Jura",
+                        fontSize: 20,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(
+                      width: MediaQuery.sizeOf(context).width,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          for (int i = 0; i < 5; i++)
+                            frames[i][0] != ""
+                                ? Draggable(
+                                    data: i,
+                                    feedback: Container(
                                       height:
                                           MediaQuery.sizeOf(context).width / 7,
-                                      width:
-                                          MediaQuery.sizeOf(context).width / 7,
-                                      decoration: const BoxDecoration(
-                                        borderRadius: BorderRadius.all(
+                                      width: MediaQuery.sizeOf(context).width / 7,
+                                      decoration: BoxDecoration(
+                                        image: DecorationImage(
+                                            image: NetworkImage(frames[i][1]),
+                                            fit: BoxFit.cover),
+                                        borderRadius: const BorderRadius.all(
                                             Radius.elliptical(10, 10)),
                                       ),
-                                    ),
-                                  ),
-                                  child: Container(
-                                    height:
-                                        MediaQuery.sizeOf(context).width / 7,
-                                    width: MediaQuery.sizeOf(context).width / 7,
-                                    decoration: BoxDecoration(
-                                      image: DecorationImage(
-                                          image: NetworkImage(frames[i][1]),
-                                          fit: BoxFit.cover),
-                                      borderRadius: const BorderRadius.all(
-                                          Radius.elliptical(10, 10)),
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        Container(
-                                          height: 30,
-                                          width:
-                                              MediaQuery.sizeOf(context).width /
-                                                  7,
-                                          decoration: const BoxDecoration(
-                                            color:
-                                                Color.fromRGBO(226, 32, 46, 1),
-                                            borderRadius: BorderRadius.only(
-                                              bottomLeft:
-                                                  Radius.elliptical(10, 10),
-                                              bottomRight:
-                                                  Radius.elliptical(10, 10),
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        children: [
+                                          Container(
+                                            height: 30,
+                                            width:
+                                                MediaQuery.sizeOf(context).width /
+                                                    7,
+                                            decoration: const BoxDecoration(
+                                              color:
+                                                  Color.fromRGBO(226, 32, 46, 1),
+                                              borderRadius: BorderRadius.only(
+                                                bottomLeft:
+                                                    Radius.elliptical(10, 10),
+                                                bottomRight:
+                                                    Radius.elliptical(10, 10),
+                                              ),
                                             ),
-                                          ),
-                                          child: Center(
-                                            child: FittedBox(
-                                              fit: BoxFit.scaleDown,
-                                              child: Text(
-                                                frames[i][0],
-                                                style: GoogleFonts.getFont(
-                                                  "Jura",
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.w500,
+                                            child: Center(
+                                              child: FittedBox(
+                                                fit: BoxFit.scaleDown,
+                                                child: Text(
+                                                  frames[i][0].replaceAll("\\n", "\n"),
+                                                  style: GoogleFonts.getFont(
+                                                    "Jura",
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
                                                 ),
                                               ),
                                             ),
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                )
-                              : DragTarget(
-                                  onAccept: (int data) {
-                                    setState(() {
-                                      frames[i] = frames[data];
-                                      frames[data] = ["", ""];
-                                    });
-                                  },
-                                  builder: (BuildContext context,
-                                      List<dynamic> accepted,
-                                      List<dynamic> rejected) {
-                                    return DottedBorder(
+                                    childWhenDragging: DottedBorder(
                                       borderType: BorderType.RRect,
                                       color: Colors.white,
                                       radius: const Radius.circular(10),
                                       child: Container(
                                         height:
-                                            MediaQuery.sizeOf(context).width /
-                                                7,
+                                            MediaQuery.sizeOf(context).width / 7,
                                         width:
-                                            MediaQuery.sizeOf(context).width /
-                                                7,
+                                            MediaQuery.sizeOf(context).width / 7,
                                         decoration: const BoxDecoration(
                                           borderRadius: BorderRadius.all(
-                                            Radius.elliptical(10, 10),
-                                          ),
+                                              Radius.elliptical(10, 10)),
                                         ),
                                       ),
-                                    );
-                                  },
-                                ),
-                      ],
+                                    ),
+                                    child: Container(
+                                      height:
+                                          MediaQuery.sizeOf(context).width / 7,
+                                      width: MediaQuery.sizeOf(context).width / 7,
+                                      decoration: BoxDecoration(
+                                        image: DecorationImage(
+                                            image: NetworkImage(frames[i][1]),
+                                            fit: BoxFit.cover),
+                                        borderRadius: const BorderRadius.all(
+                                            Radius.elliptical(10, 10)),
+                                      ),
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        children: [
+                                          Container(
+                                            height: 30,
+                                            width:
+                                                MediaQuery.sizeOf(context).width /
+                                                    7,
+                                            decoration: const BoxDecoration(
+                                              color:
+                                                  Color.fromRGBO(226, 32, 46, 1),
+                                              borderRadius: BorderRadius.only(
+                                                bottomLeft:
+                                                    Radius.elliptical(10, 10),
+                                                bottomRight:
+                                                    Radius.elliptical(10, 10),
+                                              ),
+                                            ),
+                                            child: Center(
+                                              child: FittedBox(
+                                                fit: BoxFit.scaleDown,
+                                                child: Text(
+                                                  frames[i][0].replaceAll("\\n", "\n"),
+                                                  style: GoogleFonts.getFont(
+                                                    "Jura",
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  )
+                                : DragTarget(
+                                    onAccept: (int data) {
+                                      setState(() {
+                                        frames[i] = frames[data];
+                                        frames[data] = ["", ""];
+                                      });
+                                    },
+                                    builder: (BuildContext context,
+                                        List<dynamic> accepted,
+                                        List<dynamic> rejected) {
+                                      return DottedBorder(
+                                        borderType: BorderType.RRect,
+                                        color: Colors.white,
+                                        radius: const Radius.circular(10),
+                                        child: Container(
+                                          height:
+                                              MediaQuery.sizeOf(context).width /
+                                                  7,
+                                          width:
+                                              MediaQuery.sizeOf(context).width /
+                                                  7,
+                                          decoration: const BoxDecoration(
+                                            borderRadius: BorderRadius.all(
+                                              Radius.elliptical(10, 10),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                        ],
+                      ),
                     ),
                     Padding(
                       padding: const EdgeInsets.only(top: 10.0),
@@ -423,7 +424,7 @@ class _MainGamePageState extends State<MainGamePage> {
                                                 child: FittedBox(
                                                   fit: BoxFit.scaleDown,
                                                   child: Text(
-                                                    frames[i][0],
+                                                    frames[i][0].replaceAll("\\n", "\n"),
                                                     style: GoogleFonts.getFont(
                                                       "Jura",
                                                       color: Colors.white,
@@ -494,7 +495,7 @@ class _MainGamePageState extends State<MainGamePage> {
                                                 child: FittedBox(
                                                   fit: BoxFit.scaleDown,
                                                   child: Text(
-                                                    frames[i][0],
+                                                    frames[i][0].replaceAll("\\n", "\n"),
                                                     style: GoogleFonts.getFont(
                                                       "Jura",
                                                       color: Colors.white,
@@ -554,6 +555,9 @@ class _MainGamePageState extends State<MainGamePage> {
             );
           } else {
             return ResultPage(
+              changeState: widget.changeState,
+              nombreManches: widget.nombreManches,
+              mancheActuelle: mancheActuelle,
               disposition: disposition1,
               isAdmin: widget.isAdmin,
               points: gamePoints,

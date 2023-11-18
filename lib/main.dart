@@ -103,6 +103,7 @@ class _MyAppState extends State<MyApp> {
                         nombreManches: nombreManches)
                     : _state == 3
                         ? MainGamePage(
+                            changeState: changeState,
                             nombreManches: nombreManches,
                             isAdmin: isAdmin,
                             code: code,

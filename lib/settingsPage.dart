@@ -27,7 +27,7 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   bool ready1 = false;
-  bool ready2 = true;
+  bool ready2 = false;
   late int nombreManches;
 
   late List<bool> ready;
@@ -75,7 +75,6 @@ class _SettingsPageState extends State<SettingsPage> {
       if (newMessage == "ready2") {
         ready2 = !ready2;
         if (ready1 == true && ready2 == true) {
-          socket.disconnect();
           socket.close();
           widget.changeState(1);
         } else {
@@ -86,12 +85,14 @@ class _SettingsPageState extends State<SettingsPage> {
     });
 
     socket.on("nombreMancheMoins", (newMessage) {
+      widget.changeNombreManches(nombreManches - 1);
       setState(() {
         print("nombreMancheMoins");
         nombreManches--;
       });
     });
     socket.on("nombreManchePlus", (newMessage) {
+      widget.changeNombreManches(nombreManches + 1);
       setState(() {
         print("nombreManchePlus");
         nombreManches++;

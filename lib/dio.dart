@@ -6,10 +6,10 @@ import 'package:le_bon_ordre/questionClass.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 /// More examples see https://github.com/cfug/dio/blob/main/example
-Future<List<Question>> getQuestions() async{
+Future<List<Question>> getQuestions(int nombreManche, String code) async{
   final dio = Dio();
   try{
-    final response = await dio.get('http://192.168.1.48:8080/questions');
+    final response = await dio.get('http://192.168.1.48:8080/questions?code=$code&nombreManche=$nombreManche');
     List<String> titres = [];
     List<String> type = [];
     List<List<List<String>>> reponses = [];
@@ -45,6 +45,7 @@ Future<List<Question>> getQuestions() async{
     for(int i =0; i<titres.length; i++){
       questions.add(Question(titres[i], type[i], reponses[i]));
     }
+    print(questions.length);
 
     return questions;
 

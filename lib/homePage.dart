@@ -31,7 +31,7 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           Text(
-            "Est tu prêt à trier des choses !",
+            "Es-tu prêt à trier des choses !",
             style: GoogleFonts.getFont(
               "Jura",
               fontSize: 20,
