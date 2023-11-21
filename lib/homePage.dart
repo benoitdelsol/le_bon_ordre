@@ -5,9 +5,9 @@ import 'package:le_bon_ordre/dio.dart';
 class HomePage extends StatefulWidget {
   var changeState;
   var generateCode;
-  var changeIsAdmin;
+  String code;
 
-  HomePage({super.key, required this.changeState, required this.generateCode, required this.changeIsAdmin});
+  HomePage({super.key, required this.changeState, required this.generateCode, required this.code});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -85,8 +85,6 @@ class _HomePageState extends State<HomePage> {
                 setState(() {
                   widget.generateCode();
                 });
-                widget.changeIsAdmin(true);
-                widget.changeState(2);
               },
               child: Text(
                 "Créer une partie",

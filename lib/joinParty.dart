@@ -2,41 +2,40 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:le_bon_ordre/dio.dart';
+import 'package:socket_io_client/socket_io_client.dart';
 
 class JoinParty extends StatefulWidget {
   var changeState;
-  var changeIsAdmin;
   var setCode;
   var changeNombreManches;
+  Socket socket;
+  var sendMessage;
+  var changeIsAdmin;
 
-  JoinParty({super.key, required this.changeState, required this.changeIsAdmin, required this.setCode, required this.changeNombreManches});
+  JoinParty(
+      {super.key,
+        required this.changeIsAdmin,
+        required this.sendMessage,
+      required this.changeState,
+      required this.setCode,
+      required this.changeNombreManches,
+      required this.socket});
 
   @override
   State<JoinParty> createState() => _JoinPartyState();
 }
 
 class _JoinPartyState extends State<JoinParty> {
+  String connectError = "";
   @override
   Widget build(BuildContext context) {
-
-
-    verifierCode(String code) async{
-      final List<dynamic> response = await joinGame(code.toUpperCase()) ;
-      if(response[0]=="Joined the game"){
-        print(response[1]);
-        print(response[1].runtimeType);
-        widget.changeNombreManches(response[1]);
-        widget.changeState(1);
-        widget.changeIsAdmin(false);
-        widget.setCode(code);
-      }else {
-        if (response[0] ==
-            "The game is full") {
-          print("The game is full");
-        }else{
-          print(response[0]);
-        }
-      }
+    widget.changeIsAdmin(false);
+    verifierCode(String code) async {
+      var mapMessage = {
+      'room': code.toUpperCase(),
+    };
+    widget.socket.emit('join2', mapMessage);
+    widget.setCode(code.toUpperCase());
     }
 
     return Center(
@@ -57,7 +56,6 @@ class _JoinPartyState extends State<JoinParty> {
               width: 250,
               child: TextField(
                 onSubmitted: (String value) {
-                  print('aaaaahh');
                   verifierCode(value);
                 },
                 keyboardType: TextInputType.text,
@@ -87,8 +85,19 @@ class _JoinPartyState extends State<JoinParty> {
               width: 250,
               color: const Color.fromRGBO(226, 32, 46, 1),
               child: TextButton(
+                style: ButtonStyle(
+                  backgroundColor: MaterialStateProperty.all<Color>(
+                      const Color.fromRGBO(226, 32, 46, 1)),
+                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18.0),
+                    ),
+                  ),
+                  padding: MaterialStateProperty.all<EdgeInsets>(
+                      const EdgeInsets.symmetric(horizontal: 50, vertical: 10)),
+                ),
                 onPressed: () {
-                  widget.changeState(-1);
+                  widget.changeState(0);
                 },
                 child: Text(
                   "Retour",

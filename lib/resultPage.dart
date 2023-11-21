@@ -7,10 +7,8 @@ import 'package:socket_io_client/socket_io_client.dart';
 import 'dio.dart';
 
 class ResultPage extends StatefulWidget {
-  var nextQuestion;
   var frames1;
   Question question;
-  var resetFI;
   String code;
   List<int> points;
   bool isAdmin;
@@ -18,15 +16,25 @@ class ResultPage extends StatefulWidget {
   int mancheActuelle;
   int nombreManches;
   var changeState;
+  Socket socket;
+  var sendMessage;
+  bool ready1;
+  bool ready2;
+  var resetGotQuestions;
+  var resetMancheActuelle;
 
   ResultPage({super.key,
+    required this.resetGotQuestions,
+    required this.resetMancheActuelle,
+    required this.ready1,
+    required this.ready2,
+    required this.sendMessage,
+    required this.socket,
     required this.changeState,
     required this.nombreManches,
     required this.mancheActuelle,
     required this.points,
     required this.code,
-    required this.nextQuestion,
-    required this.resetFI,
     required this.frames1,
     required this.question,
     required this.isAdmin,
@@ -51,16 +59,7 @@ class _ResultPageState extends State<ResultPage> {
     ["", ""],
     ["", ""]
   ];
-  int is1PlayerReady = 0;
-  int is2PlayerReady = 0;
 
-  late Socket socket;
-
-  @override
-  void initState() {
-    initSocket();
-    super.initState();
-  }
   late List<List<String>> questionsReconstruite;
 
   List<List<String>> reconstructList(List<List<String>> originalList, List<int> positions) {
@@ -76,61 +75,10 @@ class _ResultPageState extends State<ResultPage> {
     return reconstructedList;
   }
 
-  initSocket() {
-    socket = io('http://192.168.1.48:8080', <String, dynamic>{
-      'autoConnect': false,
-      'forceNewConnection': true,
-      'forceNew': true,
-      'transports': ['websocket'],
-    });
-    socket.connect();
-    Map messageMap = {
-      'room': widget.code.toUpperCase(),
-    };
-    socket.emit('join', messageMap);
-    socket.onConnect((_) {
-      print('Connection established');
-    });
-    socket.onDisconnect((_) => print('Connection Disconnection'));
-    socket.onConnectError((err) => print(err));
-    socket.onError((err) => print(err));
-    socket.on('ready', (newMessage) {
-      print("newMessage= "+newMessage);
-      if (newMessage == "ready1") {
-        is1PlayerReady == 1 ? is1PlayerReady = 0 : is1PlayerReady = 1;
-        if (is1PlayerReady + is2PlayerReady == 2) {
-          socket.disconnect();
-          socket.close();
-          widget.nextQuestion();
-          print("should start");
-        } else {
-          print("trying to set state");
-          setState(() {});
-        }
-      }
-      if (newMessage == "ready2") {
-        is2PlayerReady == 1 ? is2PlayerReady = 0 : is2PlayerReady = 1;
-        if (is1PlayerReady + is2PlayerReady == 2) {
-          socket.close();
-          widget.nextQuestion();
-        } else {
-          setState(() {});
-        }
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    sendMessage(String message, String arg) {
-      print("argument: " + arg);
-      if (message.isEmpty) return;
-      Map messageMap = {
-        'message': message,
-        'room': widget.code.toUpperCase(),
-      };
-      socket.emit(arg, messageMap);
-    }
+    int readyValue = widget.ready1?1:0;
+    readyValue = widget.ready2?readyValue+1:readyValue;
 
     questionsReconstruite = reconstructList(widget.question.reponses,widget.disposition);
 
@@ -598,9 +546,9 @@ class _ResultPageState extends State<ResultPage> {
           child: TextButton(
             style: ButtonStyle(
               backgroundColor: MaterialStateProperty.all<Color>(
-                  widget.isAdmin ? is1PlayerReady == 1
+                  widget.isAdmin ? widget.ready1 == true
                       ? Colors.green
-                      : const Color.fromRGBO(226, 32, 46, 1) : is2PlayerReady ==
+                      : const Color.fromRGBO(226, 32, 46, 1) : widget.ready2 ==
                       1 ? Colors.green : const Color.fromRGBO(226, 32, 46, 1)),
               shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                 RoundedRectangleBorder(
@@ -613,17 +561,19 @@ class _ResultPageState extends State<ResultPage> {
             ),
             onPressed: () {
               if (widget.mancheActuelle <widget.nombreManches) {
-                sendMessage(
+                widget.sendMessage(
                     widget.isAdmin ? "ready1" : "ready2", "ready");
               }else{
-                socket.disconnect();
-                socket.close();
-                socket.clearListeners();
-                widget.changeState(-3);
+                widget.sendMessage("0", "leave");
+                widget.resetGotQuestions();
+                widget.resetMancheActuelle();
+                setState(() {
+                  widget.changeState(0);
+                });
               }
             },
             child: Text(
-              widget.mancheActuelle<widget.nombreManches?"Continuer ${is1PlayerReady + is2PlayerReady}/2":"Quitter",
+              widget.mancheActuelle<widget.nombreManches?"Continuer ${readyValue}/2":"Quitter",
               style: GoogleFonts.getFont(
                 "Jura",
                 fontSize: 20,
