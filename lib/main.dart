@@ -120,7 +120,9 @@ class _MyAppState extends State<MyApp> {
       }
     });
     socket.on("setReady1", (newMessage) {
+      print("newMessage=" + newMessage);
       ready1 = newMessage as bool;
+      setState(() {});
     });
     socket.on("leave", (newMessage) {
       if (newMessage == "Le joueur 2 à quitté la partie") {
