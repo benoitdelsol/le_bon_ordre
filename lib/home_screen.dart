@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:le_bon_ordre/dio.dart';
 
-class HomePage extends StatefulWidget {
-  var changeState;
-  var generateCode;
-  String code;
+class HomeScreen extends StatefulWidget {
+  final void Function(int page) changeState;
+  final void Function() generateCode;
+  final String code;
 
-  HomePage({super.key, required this.changeState, required this.generateCode, required this.code});
+  HomeScreen({super.key, required this.changeState, required this.generateCode, required this.code});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomeScreenState extends State<HomeScreen> {
 
 
   @override

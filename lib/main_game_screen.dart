@@ -4,31 +4,31 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:le_bon_ordre/dio.dart';
-import 'package:le_bon_ordre/questionClass.dart';
-import 'package:le_bon_ordre/resultPage.dart';
+import 'package:le_bon_ordre/question.dart';
+import 'package:le_bon_ordre/result_screen.dart';
 import 'package:socket_io_client/socket_io_client.dart';
 import 'package:timer_count_down/timer_controller.dart';
 import 'package:timer_count_down/timer_count_down.dart';
 
-class MainGamePage extends StatefulWidget {
-  int nombreManches;
-  bool isAdmin;
-  String code;
-  var changeState;
-  Socket socket;
-  bool ready1;
-  bool ready2;
-  var sendMessage;
-  int mancheActuelle;
-  List<Question> questions;
-  var changeFinishState;
+class MainGameScreen extends StatefulWidget {
+  final int nombreManches;
+  final bool isAdmin;
+  final String code;
+  final void Function(int page) changeState;
+  final Socket socket;
+  final bool ready1;
+  final bool ready2;
+  final void Function(String message, String arg) sendMessage;
+  final int mancheActuelle;
+  final List<Question> questions;
+  final changeFinishState;
   bool isFramesInitialised;
-  bool finish;
-  var changeFrames;
-  var resetMancheActuelle;
-  var resetGotQuestions;
+  final bool finish;
+  final void Function(List<List<String>> newFrames) changeFrames;
+  final void Function() resetMancheActuelle;
+  final void Function() resetGotQuestions;
 
-  MainGamePage(
+  MainGameScreen(
       {required this.resetGotQuestions,
       required this.resetMancheActuelle,
       required this.finish,
@@ -48,10 +48,10 @@ class MainGamePage extends StatefulWidget {
       required this.questions});
 
   @override
-  State<MainGamePage> createState() => _MainGamePageState();
+  State<MainGameScreen> createState() => _MainGameScreenState();
 }
 
-class _MainGamePageState extends State<MainGamePage> {
+class _MainGameScreenState extends State<MainGameScreen> {
   int selectedFrame = -1;
 
   int points = 0;
@@ -70,7 +70,6 @@ class _MainGamePageState extends State<MainGamePage> {
 
   @override
   Widget build(BuildContext context) {
-    String disposition = "";
     if (!frames.isNotEmpty) {
       frames = [
         ["", ""],

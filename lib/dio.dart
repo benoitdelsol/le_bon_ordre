@@ -1,13 +1,13 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:le_bon_ordre/questionClass.dart';
+import 'package:le_bon_ordre/question.dart';
 
 /// More examples see https://github.com/cfug/dio/blob/main/example
 Future<List<Question>> getQuestions(int nombreManche, String code) async{
   final dio = Dio();
   try{
-    final response = await dio.get('http://bun.bun.ovh:8080/questions?code=$code&nombreManche=$nombreManche');
+    final response = await dio.get('http://bun.bun.ovh:8081/questions?code=$code&nombreManche=$nombreManche');
     List<String> titres = [];
     List<String> type = [];
     List<List<List<String>>> reponses = [];
@@ -57,7 +57,7 @@ Future<String> createGame(code) async{
   final dio = Dio();
 
   try {
-    final response = await dio.get('http://bun.bun.ovh:8080/createGame/$code');
+    final response = await dio.get('http://bun.bun.ovh:8081/createGame/$code');
     return jsonDecode(response.data);
   }catch(e){
     print(e);
@@ -70,7 +70,7 @@ Future<List<dynamic>> joinGame(code) async{
   final dio = Dio();
 
   try {
-    final response = await dio.get('http://bun.bun.ovh:8080/joinGame/$code');
+    final response = await dio.get('http://bun.bun.ovh:8081/joinGame/$code');
     List<dynamic> responseDecode = jsonDecode(response.data);
     print([jsonDecode(responseDecode[0]),jsonDecode(responseDecode[1])]);
 
@@ -86,7 +86,7 @@ Future<void> deleteGame(code) async{
   final dio = Dio();
 
   try {
-    final response = await dio.get('http://bun.bun.ovh:8080/deleteGame/$code');
+    final response = await dio.get('http://bun.bun.ovh:8081/deleteGame/$code');
     print(jsonDecode(response.data));
   }catch(e){
     print(e);
@@ -104,7 +104,7 @@ Future<List<dynamic>> sendPoints(code,points, teamNumber, disposition) async{
   final dio = Dio();
 
   try {
-    final response = await dio.get('http://bun.bun.ovh:8080/sendPoints?code=$code&points=$points&teamNumber=$teamNumber&disposition=$dispositionString');
+    final response = await dio.get('http://bun.bun.ovh:8081/sendPoints?code=$code&points=$points&teamNumber=$teamNumber&disposition=$dispositionString');
 
     points=[0,0];
     List<int>disposition3= [];

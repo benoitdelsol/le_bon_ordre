@@ -1,7 +1,7 @@
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:le_bon_ordre/questionClass.dart';
+import 'package:le_bon_ordre/question.dart';
 import 'package:socket_io_client/socket_io_client.dart';
 
 import 'dio.dart';

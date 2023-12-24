@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:le_bon_ordre/dio.dart';
-import 'package:le_bon_ordre/questionClass.dart';
+import 'package:le_bon_ordre/question.dart';
 import 'package:le_bon_ordre/settingsPage.dart';
 import 'package:socket_io_client/socket_io_client.dart';
 
-import 'homePage.dart';
-import 'joinParty.dart';
-import 'mainGamePage.dart';
+import 'home_screen.dart';
+import 'join_party.dart';
+import 'main_game_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,7 +47,7 @@ class _MyAppState extends State<MyApp> {
   bool is2Connected = false;
 
   initSocket() {
-    socket = io('http://bun.bun.ovh:8080', <String, dynamic>{
+    socket = io('http://bun.bun.ovh:8081', <String, dynamic>{
       'autoConnect': false,
       'transports': ['websocket'],
     });
@@ -59,22 +59,16 @@ class _MyAppState extends State<MyApp> {
     socket.onConnectError((err) => print(err));
     socket.onError((err) => print(err));
     socket.on('ready', (newMessage) async {
-      print(newMessage);
-      print(ready1);
-      print(ready2);
       if (newMessage == "ready1") {
         ready1 = !ready1;
         if (ready1 == true && ready2 == true) {
           isFramesInitialised = false;
           finish = false;
           mancheactuelle++;
-          print(nombreManches);
           if (gotQuestions == false) {
             questions = await getQuestions(nombreManches, code);
             gotQuestions = true;
           }
-          print(questions.length);
-          print(questions[0].titre);
           changeState(3);
           ready1 = false;
           ready2 = false;
@@ -108,7 +102,6 @@ class _MyAppState extends State<MyApp> {
       });
     });
     socket.on("join", (newMessage) {
-      print(newMessage);
       if (newMessage == "Joined the game") {
         setState(() {
           changeState(2);
@@ -118,7 +111,6 @@ class _MyAppState extends State<MyApp> {
     socket.on("join2", (newMessage) {
       print(newMessage);
       if (newMessage == "Game not find") {
-        print("Game not find");
       } else {
         nombreManches = newMessage as int;
         setState(() {
@@ -126,6 +118,9 @@ class _MyAppState extends State<MyApp> {
           changeState(2);
         });
       }
+    });
+    socket.on("setReady1", (newMessage) {
+      ready1 = newMessage as bool;
     });
     socket.on("leave", (newMessage) {
       if (newMessage == "Le joueur 2 à quitté la partie") {
@@ -260,7 +255,7 @@ class _MyAppState extends State<MyApp> {
           children: [
             _state == 0
                 ? Center(
-                    child: HomePage(
+                    child: HomeScreen(
                       code: code,
                       changeState: changeState,
                       generateCode: generateCode,
@@ -293,7 +288,7 @@ class _MyAppState extends State<MyApp> {
                           )
                         : _state == 3
                             ? Center(
-                                child: MainGamePage(
+                                child: MainGameScreen(
                                   resetGotQuestions: resetGotQuestions,
                                   resetMancheActuelle: resetMancheActuelle,
                                   finish: finish,
