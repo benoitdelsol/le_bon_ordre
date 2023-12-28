@@ -1,13 +1,43 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:le_bon_ordre/question.dart';
+import 'package:le_bon_ordre_v2/question.dart';
 
-/// More examples see https://github.com/cfug/dio/blob/main/example
-Future<List<Question>> getQuestions(int nombreManche, String code) async{
+const String address= 'http://192.168.254.64:8081';
+
+Future<List<String>> createGameBack()async{
+  final dio = Dio();
+  try {
+    final response= await dio.get('$address/createGame');
+    String code = jsonDecode(response.data);
+    return(["0",code]);
+  }catch(e){
+    return(["1","Impossible de se connecter au serveur."]);
+  }
+
+}
+
+Future<String> joinGameBack(String code1)async{
+  final dio = Dio();
+  try {
+    final response= await dio.get('$address/joinGame/$code1');
+    String responseDecode = jsonDecode(response.data);
+    if(responseDecode=="Vous avez rejoint la partie !"){
+      return("0");
+    }
+    else{
+      return(responseDecode);
+    }
+  }catch(e){
+    return("Impossible de se connecter au serveur.");
+  }
+
+}
+
+Future<List<Question>> getQuestions(String code) async{
   final dio = Dio();
   try{
-    final response = await dio.get('http://bun.bun.ovh:8081/questions?code=$code&nombreManche=$nombreManche');
+    final response = await dio.get('$address/getQuestions?code=$code');
     List<String> titres = [];
     List<String> type = [];
     List<List<List<String>>> reponses = [];
@@ -48,50 +78,8 @@ Future<List<Question>> getQuestions(int nombreManche, String code) async{
     return questions;
 
   }catch(e){print(e);
-    return [];
+  return [];
   }
-}
-
-Future<String> createGame(code) async{
-
-  final dio = Dio();
-
-  try {
-    final response = await dio.get('http://bun.bun.ovh:8081/createGame/$code');
-    return jsonDecode(response.data);
-  }catch(e){
-    print(e);
-    return(e.toString());
-  }
-}
-
-Future<List<dynamic>> joinGame(code) async{
-
-  final dio = Dio();
-
-  try {
-    final response = await dio.get('http://bun.bun.ovh:8081/joinGame/$code');
-    List<dynamic> responseDecode = jsonDecode(response.data);
-    print([jsonDecode(responseDecode[0]),jsonDecode(responseDecode[1])]);
-
-    return [jsonDecode(responseDecode[0]),jsonDecode(responseDecode[1])];
-  }catch(e){
-    print(e);
-    return([e.toString(),0]);
-  }
-}
-
-Future<void> deleteGame(code) async{
-
-  final dio = Dio();
-
-  try {
-    final response = await dio.get('http://bun.bun.ovh:8081/deleteGame/$code');
-    print(jsonDecode(response.data));
-  }catch(e){
-    print(e);
-  }
-
 }
 
 Future<List<dynamic>> sendPoints(code,points, teamNumber, disposition) async{
@@ -104,7 +92,7 @@ Future<List<dynamic>> sendPoints(code,points, teamNumber, disposition) async{
   final dio = Dio();
 
   try {
-    final response = await dio.get('http://bun.bun.ovh:8081/sendPoints?code=$code&points=$points&teamNumber=$teamNumber&disposition=$dispositionString');
+    final response = await dio.get('$address/sendPoints?code=$code&points=$points&teamNumber=$teamNumber&disposition=$dispositionString');
 
     points=[0,0];
     List<int>disposition3= [];

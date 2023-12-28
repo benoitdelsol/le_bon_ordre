@@ -1,65 +1,46 @@
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:le_bon_ordre/question.dart';
-import 'package:socket_io_client/socket_io_client.dart';
+import 'package:le_bon_ordre_v2/question.dart';
 
-import 'dio.dart';
-
-class ResultPage extends StatefulWidget {
-  var frames1;
-  Question question;
-  String code;
-  List<int> points;
-  bool isAdmin;
-  List<int> disposition;
-  int mancheActuelle;
-  int nombreManches;
-  var changeState;
-  Socket socket;
-  var sendMessage;
-  bool ready1;
-  bool ready2;
-  var resetGotQuestions;
-  var resetMancheActuelle;
-
-  ResultPage({super.key,
-    required this.resetGotQuestions,
-    required this.resetMancheActuelle,
-    required this.ready1,
-    required this.ready2,
-    required this.sendMessage,
-    required this.socket,
-    required this.changeState,
+class ResultScreen extends StatefulWidget {
+  const ResultScreen({super.key,
+  required this.code,
+    required this.isAdmin,
+    required this.frames,
+    required this.question,
+    required this.disposition,
     required this.nombreManches,
     required this.mancheActuelle,
-    required this.points,
-    required this.code,
-    required this.frames1,
-    required this.question,
-    required this.isAdmin,
-    required this.disposition});
+    required this.next1,
+    required this.next2,
+    required this.sendMessage,
+    required this.changeState,
+    required this.gamePoints,
+
+  });
+
+  final String code;
+  final bool isAdmin;
+  final List<List<String>> frames;
+  final Question question;
+  final List<int> disposition;
+  final int mancheActuelle;
+  final int nombreManches;
+  final bool next1;
+  final bool next2;
+  final void Function(String, String) sendMessage;
+  final void Function(int) changeState;
+  final List<int> gamePoints;
+
 
   @override
-  State<ResultPage> createState() => _ResultPageState();
+  State<ResultScreen> createState() => _ResultScreenState();
 }
 
-class _ResultPageState extends State<ResultPage> {
+class _ResultScreenState extends State<ResultScreen> {
+
   bool showResult = false;
-
-  List<List<String>> frames2 = [
-    ["", ""],
-    ["", ""],
-    ["", ""],
-    ["", ""],
-    ["", ""],
-    ["", ""],
-    ["", ""],
-    ["", ""],
-    ["", ""],
-    ["", ""]
-  ];
-
   late List<List<String>> questionsReconstruite;
 
   List<List<String>> reconstructList(List<List<String>> originalList, List<int> positions) {
@@ -77,13 +58,8 @@ class _ResultPageState extends State<ResultPage> {
 
   @override
   Widget build(BuildContext context) {
-    int readyValue = widget.ready1?1:0;
-    readyValue = widget.ready2?readyValue+1:readyValue;
 
     questionsReconstruite = reconstructList(widget.question.reponses,widget.disposition);
-
-
-    print(widget.disposition);
 
     return !showResult
         ? Stack(
@@ -96,7 +72,7 @@ class _ResultPageState extends State<ResultPage> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 for (int i = 5; i < 10; i++)
-                  widget.frames1[i][0] != ""
+                  widget.frames[i][0] != ""
                       ? Container(
                     height:
                     MediaQuery
@@ -108,7 +84,7 @@ class _ResultPageState extends State<ResultPage> {
                         .width / 10,
                     decoration: BoxDecoration(
                       border: Border.all(
-                          color: widget.frames1[i][0] ==
+                          color: widget.frames[i][0] ==
                               widget.question
                                   .reponses[i - 5][0]
                               ? Colors.green
@@ -116,7 +92,7 @@ class _ResultPageState extends State<ResultPage> {
                           width: 5),
                       image: DecorationImage(
                           image: NetworkImage(
-                              widget.frames1[i][1]),
+                              widget.frames[i][1]),
                           fit: BoxFit.cover),
                       borderRadius: const BorderRadius.all(
                           Radius.elliptical(10, 10)),
@@ -145,7 +121,7 @@ class _ResultPageState extends State<ResultPage> {
                             child: FittedBox(
                               fit: BoxFit.scaleDown,
                               child: Text(
-                                widget.frames1[i][0],
+                                widget.frames[i][0],
                                 style: GoogleFonts.getFont(
                                   "Jura",
                                   color: Colors.white,
@@ -413,7 +389,7 @@ class _ResultPageState extends State<ResultPage> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 for (int i = 5; i < 10; i++)
-                  widget.frames1[i][0] != ""
+                  widget.frames[i][0] != ""
                       ? Container(
                     height:
                     MediaQuery
@@ -425,7 +401,7 @@ class _ResultPageState extends State<ResultPage> {
                         .width / 10,
                     decoration: BoxDecoration(
                       border: Border.all(
-                          color: widget.frames1[i][0] ==
+                          color: widget.frames[i][0] ==
                               widget.question
                                   .reponses[i - 5][0]
                               ? Colors.green
@@ -433,7 +409,7 @@ class _ResultPageState extends State<ResultPage> {
                           width: 5),
                       image: DecorationImage(
                           image: NetworkImage(
-                              widget.frames1[i][1]),
+                              widget.frames[i][1]),
                           fit: BoxFit.cover),
                       borderRadius: const BorderRadius.all(
                           Radius.elliptical(10, 10)),
@@ -462,7 +438,7 @@ class _ResultPageState extends State<ResultPage> {
                             child: FittedBox(
                               fit: BoxFit.scaleDown,
                               child: Text(
-                                widget.frames1[i][0],
+                                widget.frames[i][0],
                                 style: GoogleFonts.getFont(
                                   "Jura",
                                   color: Colors.white,
@@ -546,10 +522,9 @@ class _ResultPageState extends State<ResultPage> {
           child: TextButton(
             style: ButtonStyle(
               backgroundColor: MaterialStateProperty.all<Color>(
-                  widget.isAdmin ? widget.ready1 == true
+                  widget.isAdmin ? widget.next1
                       ? Colors.green
-                      : const Color.fromRGBO(226, 32, 46, 1) : widget.ready2 ==
-                      1 ? Colors.green : const Color.fromRGBO(226, 32, 46, 1)),
+                      : const Color.fromRGBO(226, 32, 46, 1) : widget.next2 ? Colors.green : const Color.fromRGBO(226, 32, 46, 1)),
               shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                 RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(18.0),
@@ -561,19 +536,17 @@ class _ResultPageState extends State<ResultPage> {
             ),
             onPressed: () {
               if (widget.mancheActuelle <widget.nombreManches) {
-                widget.sendMessage(
-                    widget.isAdmin ? "ready1" : "ready2", "ready");
+                widget.sendMessage("",
+                    widget.isAdmin ?"next1":"next2");
               }else{
-                widget.sendMessage("0", "leave");
-                widget.resetGotQuestions();
-                widget.resetMancheActuelle();
+                widget.sendMessage("", "leaveEnd");
                 setState(() {
                   widget.changeState(0);
                 });
               }
             },
             child: Text(
-              widget.mancheActuelle<widget.nombreManches?"Continuer ${readyValue}/2":"Quitter",
+              widget.mancheActuelle<widget.nombreManches?"Continuer ${(widget.next1?1:0) + (widget.next2?1:0)}/2":"Quitter",
               style: GoogleFonts.getFont(
                 "Jura",
                 fontSize: 20,
@@ -598,7 +571,7 @@ class _ResultPageState extends State<ResultPage> {
                   ),
                 ),
                 Text(
-                  (widget.points[0]).toString(),
+                  (widget.gamePoints[0]).toString(),
                   style: GoogleFonts.getFont(
                     "Erica One",
                     fontSize: 50,
@@ -626,7 +599,7 @@ class _ResultPageState extends State<ResultPage> {
                   ),
                 ),
                 Text(
-                  (widget.points[1]).toString(),
+                  (widget.gamePoints[1]).toString(),
                   style: GoogleFonts.getFont(
                     "Erica One",
                     fontSize: 50,
