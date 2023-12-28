@@ -36,7 +36,7 @@ class _GameState extends State<Game> {
     super.initState();
   }
 
-  final String address = 'http://192.168.254.64:8081';
+  final String address = 'http://bun.bun.ovh:8081';
 
   void getGameState(String code) {
     sendMessage("", "getNumberRounds");

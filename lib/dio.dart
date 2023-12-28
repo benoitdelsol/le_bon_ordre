@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:le_bon_ordre_v2/question.dart';
 
-const String address= 'http://192.168.254.64:8081';
+const String address= 'http://bun.bun.ovh:8081';
 
 Future<List<String>> createGameBack()async{
   final dio = Dio();
